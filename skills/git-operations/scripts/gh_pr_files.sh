@@ -1,0 +1,30 @@
+#!/bin/bash
+# Get list of changed files in a Pull Request
+# Usage: gh_pr_files.sh <pr_number> [owner] [repo]
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../config/git-config.sh"
+
+PR=$1
+OWNER="${2:-$DEFAULT_OWNER}"
+REPO="${3:-$DEFAULT_REPO}"
+
+if [ -z "$PR" ]; then
+    echo "Usage: gh_pr_files.sh <pr_number> [owner] [repo]" >&2
+    exit 1
+fi
+
+if [ -z "$OWNER" ] || [ -z "$REPO" ]; then
+    echo "Error: Owner and repo required. Set DEFAULT_OWNER/DEFAULT_REPO or pass as arguments" >&2
+    exit 1
+fi
+
+echo "=== PR FILES ===" >&2
+echo "Repository: $OWNER/$REPO" >&2
+echo "PR: #$PR" >&2
+echo "" >&2
+
+gh pr view "$PR" \
+    --repo "$OWNER/$REPO" \
+    --json files \
+    | jq -r '.files[] | "\(.path) (+\(.additions)/-\(.deletions))"'
